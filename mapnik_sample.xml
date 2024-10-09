@@ -1,0 +1,26 @@
+<Map>
+    <Layer name="nasa" srs="epsg:3857">
+        <StyleName>nasa-style</StyleName>
+        <Datasource>
+            <Parameter name="type">raster</Parameter>
+            <Parameter name="file">/home/cristian/Documents/quarticle/nasa_lights_compr.tif</Parameter>
+        </Datasource>
+    </Layer>
+
+    <Style name="nasa-style">
+        <Rule>
+            <RasterSymbolizer>
+                <RasterColorizer default-mode="linear" default-color="white" epsilon="0.001">
+                    <stop color="blue"        value = "-1000"  />
+                    <stop color="red"         value = "-500"   mode = "discrete" />
+                    <stop color="yellow"      value = "0"      />
+                    <stop                     value = "5"      />
+                    <stop color="red"         value = "10"     />
+                    <stop color="green"       value = "15"     />
+                    <stop color="black"       value = "17"     mode = "exact"    />
+                    <stop color="indigo"      value = "100"    />
+                </RasterColorizer>
+            </RasterSymbolizer>
+        </Rule>
+    </Style>
+</Map>
