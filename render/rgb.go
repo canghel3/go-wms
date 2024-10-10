@@ -28,7 +28,7 @@ func (r *RGBRenderer) Render() (image.Image, error) {
 		for x := 0; x < r.width; x++ {
 			value := r.data[y*r.width+x]
 			// Normalize the value between 0 and 255
-			normalized := (value - min) / (max - min) * 255
+			normalized := uint8((value - min) / (max - min) * 255)
 			col := applyColorMap(normalized)
 			img.Set(x, y, col)
 		}
@@ -53,13 +53,13 @@ var colorMap = []colorEntry{
 
 type colorEntry struct {
 	color color.RGBA
-	min   float64
-	max   float64
+	min   uint8
+	max   uint8
 }
 
-func applyColorMap(value float64) color.RGBA {
+func applyColorMap(value uint8) color.RGBA {
 	for _, entry := range colorMap {
-		if value >= entry.min && value < entry.max {
+		if value >= entry.min && value <= entry.max {
 			return entry.color
 		}
 	}
