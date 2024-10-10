@@ -106,12 +106,12 @@ func renderGodal(input string) error {
 }
 
 func handleSingleBand(ds *godal.Dataset) {
-	bbox := [4]float64{2353018.3695, 5733388.6176, 2367713.3882, 5748064.5270}
+	bbox := [4]float64{1878516.407136492, 5635549.221409476, 2035059.441064533, 5792092.255337515}
 	width := 256
 	// Calculate the aspect ratio of the bounding box
 	aspectRatio := (bbox[2] - bbox[0]) / (bbox[3] - bbox[1])
 	// Calculate the height based on the aspect ratio
-	height := int(float64(width) / aspectRatio)
+	height := int(float64(width)/aspectRatio) + 1
 
 	switches := []string{
 		"-te", fmt.Sprintf("%f", bbox[0]), fmt.Sprintf("%f", bbox[1]), fmt.Sprintf("%f", bbox[2]), fmt.Sprintf("%f", bbox[3]),
