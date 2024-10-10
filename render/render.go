@@ -1,5 +1,7 @@
 package render
 
+import "image"
+
 type Renderer interface {
-	Render() error
+	Render() (image.Image, error)
 }

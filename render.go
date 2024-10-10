@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/canghel3/go-wms/render"
+	"github.com/omniscale/go-mapnik"
 	"image"
 	"image/color"
 	"image/png"
@@ -13,7 +14,6 @@ import (
 
 	"github.com/Ginger955/gdal"
 	"github.com/airbusgeo/godal"
-	"github.com/omniscale/go-mapnik"
 )
 
 func renderGdal(input string) {
@@ -105,6 +105,62 @@ func renderGodal(input string) error {
 	return nil
 }
 
+func handleSingleBand(ds *godal.Dataset) {
+	bbox := [4]float64{2353018.3695, 5733388.6176, 2367713.3882, 5748064.5270}
+	width := 256
+	// Calculate the aspect ratio of the bounding box
+	aspectRatio := (bbox[2] - bbox[0]) / (bbox[3] - bbox[1])
+	// Calculate the height based on the aspect ratio
+	height := int(float64(width) / aspectRatio)
+
+	switches := []string{
+		"-te", fmt.Sprintf("%f", bbox[0]), fmt.Sprintf("%f", bbox[1]), fmt.Sprintf("%f", bbox[2]), fmt.Sprintf("%f", bbox[3]),
+		"-te_srs", "EPSG:3857",
+		"-ts", fmt.Sprintf("%d", width), fmt.Sprintf("%d", height),
+		"-s_srs", "EPSG:3857",
+		"-t_srs", "EPSG:3857",
+		"-of", "MEM",
+	}
+
+	ds, err := ds.Warp("", switches)
+	if err != nil {
+		log.Fatalf("Failed to translate: %v", err)
+	}
+	defer ds.Close()
+
+	// Get raster band (assuming the first band, for simplicity)
+	band := ds.Bands()[0]
+
+	// Read the raster data into a float64 slice
+	data := make([]float64, width*height)
+	err = band.Read(0, 0, data, width, height)
+	if err != nil {
+		log.Fatalf("Failed to read raster data: %v", err)
+	}
+
+	//gs := render.Gray(data, width, height, true)
+	gs := render.RGB(data, width, height)
+	// Create the output PNG file
+	outputFile, err := os.Create("output.png")
+	if err != nil {
+		log.Fatalf("Failed to create PNG file: %v", err)
+	}
+	defer outputFile.Close()
+
+	render, err := gs.Render()
+	if err != nil {
+		log.Fatalf("Failed to render: %v", err)
+	}
+
+	// Encode the image to PNG format
+	err = png.Encode(outputFile, render)
+	if err != nil {
+		log.Fatalf("Failed to encode PNG: %v", err)
+	}
+
+	log.Println("Styled PNG file successfully created!")
+}
+
 func nik() {
 	mapnik.LogSeverity(mapnik.Debug)
 	m := mapnik.New()
@@ -114,10 +170,10 @@ func nik() {
 		log.Fatalf("Failed to load mapnik: %v", err)
 	}
 
-	bbox := [4]float64{2323150.6007, 5709616.7018, 2394160.5999, 5758154.2148}
+	bbox := [4]float64{2353018.3695, 5733388.6176, 2367713.3882, 5748064.5270}
 	m.ZoomTo(bbox[0], bbox[1], bbox[2], bbox[3])
 	//m.SetMaxExtent(bbox[0], bbox[1], bbox[2], bbox[3])
-	m.Resize(500, 500)
+	m.Resize(256, 256)
 	m.SetSRS("epsg:3857")
 	fmt.Println(m.SRS())
 	nrgba, err := m.RenderImage(mapnik.RenderOpts{
@@ -135,7 +191,7 @@ func nik() {
 	}
 
 	// Create the output PNG file
-	outputFile, err := os.Create("output.png")
+	outputFile, err := os.Create("output2.png")
 	if err != nil {
 		log.Fatalf("Failed to create PNG file: %v", err)
 	}
@@ -151,54 +207,4 @@ func nik() {
 	}
 
 	log.Println("DONE!")
-}
-
-func handleSingleBand(ds *godal.Dataset) {
-	bbox := [4]float64{2323150.6007, 5709616.7018, 2394160.5999, 5758154.2148}
-	width := 256
-	height := 256
-	switches := []string{
-		"-te", fmt.Sprintf("%f", bbox[0]), fmt.Sprintf("%f", bbox[1]), fmt.Sprintf("%f", bbox[2]), fmt.Sprintf("%f", bbox[3]),
-		"-te_srs", "EPSG:3857",
-		//"-co", "TILED=YES",
-		"-ts", fmt.Sprintf("%d", width), fmt.Sprintf("%d", height),
-		"-s_srs", "EPSG:3857",
-		"-t_srs", "EPSG:3857",
-		"-of", "MEM",
-	}
-
-	ds, err := ds.Warp("", switches)
-	if err != nil {
-		log.Fatalf("Failed to translate: %v", err)
-	}
-	// Get raster band (assuming the first band, for simplicity)
-	band := ds.Bands()[0]
-
-	//// Get the raster dimensions
-	//width = ds.Structure().SizeX
-	//height = ds.Structure().SizeY
-
-	// Read the raster data into a float32 slice
-	data := make([]float64, width*height)
-	err = band.Read(0, 0, data, width, height)
-	if err != nil {
-		log.Fatalf("Failed to read raster data: %v", err)
-	}
-
-	gs := render.NewGrayScale(data, width, height, [4]float64{})
-
-	// Create the output PNG file
-	outputFile, err := os.Create("output.png")
-	if err != nil {
-		log.Fatalf("Failed to create PNG file: %v", err)
-	}
-	defer outputFile.Close()
-
-	// Encode the image to PNG format
-	err = png.Encode(outputFile, gs.Render())
-	if err != nil {
-		log.Fatalf("Failed to encode PNG: %v", err)
-	}
-
-	log.Println("Styled PNG file successfully created!")
 }

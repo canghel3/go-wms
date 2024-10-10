@@ -10,15 +10,9 @@
     <Style name="nasa-style">
         <Rule>
             <RasterSymbolizer>
-                <RasterColorizer default-mode="linear" default-color="white" epsilon="0.001">
-                    <stop color="blue"        value = "-1000"  />
-                    <stop color="red"         value = "-500"   mode = "discrete" />
-                    <stop color="yellow"      value = "0"      />
-                    <stop                     value = "5"      />
-                    <stop color="red"         value = "10"     />
-                    <stop color="green"       value = "15"     />
-                    <stop color="black"       value = "17"     mode = "exact"    />
-                    <stop color="indigo"      value = "100"    />
+                <RasterColorizer default-mode="linear" default-color="black" epsilon="0.001">
+                    <stop color="white" value="0" />
+                    <stop color="black" value="255" />
                 </RasterColorizer>
             </RasterSymbolizer>
         </Rule>
