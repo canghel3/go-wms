@@ -27,6 +27,9 @@ func (r *RGBRenderer) Render() (image.Image, error) {
 	for y := 0; y < r.height; y++ {
 		for x := 0; x < r.width; x++ {
 			value := r.data[y*r.width+x]
+			//TODO: extract min and max from whole raster once and use that for normalization,
+			// otherwise the raster changes color as we zoom in
+
 			// Normalize the value between 0 and 255
 			normalized := uint8((value - min) / (max - min) * 255)
 			col := applyColorMap(normalized)

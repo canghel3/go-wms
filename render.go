@@ -87,7 +87,7 @@ func renderGdal(input string) {
 	log.Println("elapsed: ", time.Since(s))
 }
 
-func renderGodal(input string) error {
+func renderGodal(input string, bbox [4]float64, width, height int) ([]byte, error) {
 	s := time.Now()
 	// Open the .tif file using godal
 	ds, err := godal.Open(input)
@@ -98,20 +98,31 @@ func renderGodal(input string) error {
 
 	switch len(ds.Bands()) {
 	case 1:
-		handleSingleBand(ds)
+		img, err := handleSingleBand(ds, bbox, width, height)
+		if err != nil {
+			return nil, err
+		}
+
+		var content bytes.Buffer
+		err = png.Encode(&content, img)
+		if err != nil {
+			log.Fatalf("Failed to encode PNG: %v", err)
+		}
+
+		return content.Bytes(), nil
 	}
 
 	log.Println("elapsed: ", time.Since(s))
-	return nil
+	return nil, nil
 }
 
-func handleSingleBand(ds *godal.Dataset) {
-	bbox := [4]float64{1878516.407136492, 5635549.221409476, 2035059.441064533, 5792092.255337515}
-	width := 256
-	// Calculate the aspect ratio of the bounding box
-	aspectRatio := (bbox[2] - bbox[0]) / (bbox[3] - bbox[1])
-	// Calculate the height based on the aspect ratio
-	height := int(float64(width)/aspectRatio) + 1
+func handleSingleBand(ds *godal.Dataset, bbox [4]float64, width, height int) (image.Image, error) {
+	//bbox := [4]float64{1878516.407136492, 5635549.221409476, 2035059.441064533, 5792092.255337515}
+	//width := 256
+	//// Calculate the aspect ratio of the bounding box
+	//aspectRatio := (bbox[2] - bbox[0]) / (bbox[3] - bbox[1])
+	//// Calculate the height based on the aspect ratio
+	//height := int(float64(width)/aspectRatio) + 1
 
 	switches := []string{
 		"-te", fmt.Sprintf("%f", bbox[0]), fmt.Sprintf("%f", bbox[1]), fmt.Sprintf("%f", bbox[2]), fmt.Sprintf("%f", bbox[3]),
@@ -124,7 +135,8 @@ func handleSingleBand(ds *godal.Dataset) {
 
 	ds, err := ds.Warp("", switches)
 	if err != nil {
-		log.Fatalf("Failed to translate: %v", err)
+		log.Printf("Failed to translate: %v\n", err)
+		return nil, err
 	}
 	defer ds.Close()
 
@@ -135,30 +147,36 @@ func handleSingleBand(ds *godal.Dataset) {
 	data := make([]float64, width*height)
 	err = band.Read(0, 0, data, width, height)
 	if err != nil {
-		log.Fatalf("Failed to read raster data: %v", err)
+		log.Printf("Failed to read raster data: %v", err)
+		return nil, err
 	}
 
 	//gs := render.Gray(data, width, height, true)
 	gs := render.RGB(data, width, height)
-	// Create the output PNG file
-	outputFile, err := os.Create("output.png")
-	if err != nil {
-		log.Fatalf("Failed to create PNG file: %v", err)
-	}
-	defer outputFile.Close()
-
 	render, err := gs.Render()
 	if err != nil {
-		log.Fatalf("Failed to render: %v", err)
+		log.Printf("Failed to render: %v", err)
+		return nil, err
 	}
 
-	// Encode the image to PNG format
-	err = png.Encode(outputFile, render)
-	if err != nil {
-		log.Fatalf("Failed to encode PNG: %v", err)
-	}
+	return render, nil
 
-	log.Println("Styled PNG file successfully created!")
+	//// Create the output PNG file
+	//outputFile, err := os.Create("output.png")
+	//if err != nil {
+	//	log.Printf("Failed to create PNG file: %v", err)
+	//	return nil, err
+	//}
+	//defer outputFile.Close()
+
+	//// Encode the image to PNG format
+	//err = png.Encode(outputFile, render)
+	//if err != nil {
+	//	log.Printf("Failed to encode PNG: %v", err)
+	//	return nil, err
+	//}
+	//
+	//log.Println("Styled PNG file successfully created!")
 }
 
 func nik() {
