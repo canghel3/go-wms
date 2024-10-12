@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/airbusgeo/godal"
 	"log"
 	"net/http"
 	"os"
@@ -9,6 +10,9 @@ import (
 	"strings"
 	"time"
 )
+
+var globalMin float64
+var globalMax float64
 
 func main() {
 
@@ -73,7 +77,28 @@ func main() {
 		}
 	})
 
-	err := server.ListenAndServe()
+	ds, err := godal.Open("/home/cristian/Documents/quarticle/nasa_lights_compr.tif")
+	if err != nil {
+		log.Fatalf("Failed to open TIFF file: %v", err)
+	}
+	defer ds.Close()
+
+	band := ds.Bands()[0]
+	x := band.Structure().SizeX
+	y := band.Structure().SizeY
+
+	// Read the raster data into a float64 slice
+	data := make([]float64, x*y)
+	err = band.Read(0, 0, data, x, y)
+	if err != nil {
+		log.Printf("Failed to read raster data: %v", err)
+		panic(err)
+	}
+	min, max := findMinMax(data)
+	globalMax = max
+	globalMin = min
+
+	err = server.ListenAndServe()
 	if err != nil {
 		panic(err)
 	}

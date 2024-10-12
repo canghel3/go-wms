@@ -98,7 +98,7 @@ func renderGodal(input string, bbox [4]float64, width, height int) ([]byte, erro
 
 	switch len(ds.Bands()) {
 	case 1:
-		img, err := handleSingleBand(ds, bbox, width, height)
+		img, err := handleSingleBand(ds, bbox, width, height, globalMin, globalMax)
 		if err != nil {
 			return nil, err
 		}
@@ -116,7 +116,7 @@ func renderGodal(input string, bbox [4]float64, width, height int) ([]byte, erro
 	return nil, nil
 }
 
-func handleSingleBand(ds *godal.Dataset, bbox [4]float64, width, height int) (image.Image, error) {
+func handleSingleBand(ds *godal.Dataset, bbox [4]float64, width, height int, min float64, max float64) (image.Image, error) {
 	//bbox := [4]float64{1878516.407136492, 5635549.221409476, 2035059.441064533, 5792092.255337515}
 	//width := 256
 	//// Calculate the aspect ratio of the bounding box
@@ -152,7 +152,7 @@ func handleSingleBand(ds *godal.Dataset, bbox [4]float64, width, height int) (im
 	}
 
 	//gs := render.Gray(data, width, height, true)
-	gs := render.RGB(data, width, height)
+	gs := render.RGB(data, width, height, min, max)
 	render, err := gs.Render()
 	if err != nil {
 		log.Printf("Failed to render: %v", err)
@@ -177,6 +177,19 @@ func handleSingleBand(ds *godal.Dataset, bbox [4]float64, width, height int) (im
 	//}
 	//
 	//log.Println("Styled PNG file successfully created!")
+}
+
+func findMinMax(data []float64) (min, max float64) {
+	min, max = data[0], data[0]
+	for _, v := range data {
+		if v < min {
+			min = v
+		}
+		if v > max {
+			max = v
+		}
+	}
+	return
 }
 
 func nik() {

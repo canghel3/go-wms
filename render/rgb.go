@@ -9,19 +9,27 @@ type RGBRenderer struct {
 	width  int
 	height int
 	data   []float64
+	min    float64
+	max    float64
 }
 
-func RGB(data []float64, width, height int) *RGBRenderer {
+func RGB(data []float64, width, height int, min, max float64) *RGBRenderer {
 	return &RGBRenderer{
 		width:  width,
 		height: height,
 		data:   data,
+		min:    min,
+		max:    max,
 	}
 }
 
 func (r *RGBRenderer) Render() (image.Image, error) {
 	img := image.NewRGBA(image.Rect(0, 0, r.width, r.height))
-	min, max := findMinMax(r.data)
+
+	rangeVal := r.max - r.min
+	if rangeVal == 0 {
+		rangeVal = 1
+	}
 
 	// Normalize and apply the color map
 	for y := 0; y < r.height; y++ {
@@ -31,8 +39,9 @@ func (r *RGBRenderer) Render() (image.Image, error) {
 			// otherwise the raster changes color as we zoom in
 
 			// Normalize the value between 0 and 255
-			normalized := uint8((value - min) / (max - min) * 255)
-			col := applyColorMap(normalized)
+			//normalized := uint8((value - r.min) / (r.max - r.min) * 255)
+			//normalized := uint8((value - r.min) / rangeVal * 255)
+			col := applyColorMap(uint8(value))
 			img.Set(x, y, col)
 		}
 	}
