@@ -50,7 +50,7 @@ func (r *RGBRenderer) Render() (image.Image, error) {
 
 // Define the color map as per the provided style
 var colorMap = []colorEntry{
-	{color.RGBA{0x00, 0x00, 0x00, 0xFF}, 0, 10},    // #000000
+	{color.RGBA{0x00, 0x00, 0x00, 0xFF}, 1, 10},    // #000000
 	{color.RGBA{0x09, 0x3a, 0x7f, 0xFF}, 10, 20},   // #093a7f
 	{color.RGBA{0x00, 0x2b, 0x65, 0xFF}, 20, 30},   // #002b65
 	{color.RGBA{0x05, 0x3e, 0x88, 0xFF}, 30, 40},   // #053e88
